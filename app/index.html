@@ -4,30 +4,30 @@
         <meta charset="utf-8">
         <title>Filesync</title>
         <style>
-			#status {
-				position: fixed;
-				bottom: 10px;
-				right: 10px;
-			}
+            #status {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+            }
         </style>
     </head>
     <body>
-    	<div id="status"></div>
-    	<script src="jquery.js"></script>
-		<script type="text/javascript">
-			var filesync = require('./filesync');
-			filesync.folder = '/var/www/node-webkit-filerunner';
+        <div id="status"></div>
+        <script src="jquery.js"></script>
+        <script type="text/javascript">
+            var filesync = require('./filesync');
+            filesync.folder = '/var/www/node-webkit-filerunner';
 
-			filesync.on('start', function() {
-				$('#status').html('Start download');
-			});
-			filesync.on('progress', function(progress) {
-				$('#status').html('Progress: ' + progress);
-			});
-			filesync.on('finished', function() {
-				$('#status').html('Finished download!');
-			});
-			filesync.downloadAndSyncFile("http://data.razko.nl/projects/rovachan/dist-1.0-SNAPSHOT.zip");
-		</script>
+            filesync.on('start', function() {
+                $('#status').html('Start download');
+            });
+            filesync.on('progress', function(progress) {
+                $('#status').html('Progress: ' + progress);
+            });
+            filesync.on('finished', function() {
+                $('#status').html('Finished download!');
+            });
+            filesync.downloadAndSyncFile("http://data.razko.nl/projects/rovachan/dist-1.0-SNAPSHOT.zip");
+        </script>
     </body>
 </html>
