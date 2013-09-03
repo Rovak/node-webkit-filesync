@@ -25,7 +25,7 @@
     <script src="jquery.js"></script>
     <script type="text/javascript">
       var filesync = require('./filesync').create({
-        folder: '/var/www/node-webkit-filerunner/folder'
+        folder: '/var/www/node-webkit-filerunner/folder/'
       });
       filesync.on('sync_start', function(data) {
         var tag = '<li id="file-' + data.id + '">New File</li>';
