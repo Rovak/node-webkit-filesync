@@ -7,4 +7,4 @@ fi
 
 mkdir build
 zip -j build/app.nw src/* app/*
-nw build/app.nw &
+nw build/app.nw

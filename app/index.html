@@ -25,27 +25,26 @@
     <script src="jquery.js"></script>
     <script type="text/javascript">
       var filesync = require('./filesync').create({
-        folder: '/var/www/node-webkit-filerunner'
+        folder: '/var/www/node-webkit-filerunner/folder'
       });
-      filesync.on('start', function(data) {
+      filesync.on('sync_start', function(data) {
         var tag = '<li id="file-' + data.id + '">New File</li>';
         $('#status ul').append(tag);
       });
-      filesync.on('progress', function(data) {
+      filesync.on('sync_progress', function(data) {
         $('#file-' + data.id).html('Progress: ' + data.percentage);
       });
-      filesync.on('finished', function(data) {
+      filesync.on('sync_finished', function(data) {
         $('#file-' + data.id).html('Finished download!');
       });
-      filesync.on('send', function(data) {
+      filesync.on('send_start', function(data) {
         $('#file-' + data.id).html('Syncing');
       });
-      filesync.on('sycned', function(data) {
+      filesync.on('send_done', function(data) {
         $('#file-' + data.id).html('Scyned');
       });
       $('#start-download').click(function(){
-        filesync.downloadAndSyncFile("https://gist.github.com/Rovak/02de216e47893d48104f/raw/97c01a50cade3c30f7767fde242fe6b6bd8ea970/hacking-game.md");
-        //filesync.downloadAndSyncFile("http://data.razko.nl/projects/rovachan/dist-1.0-SNAPSHOT.zip");
+        filesync.downloadAndSyncFile("http://localhost/node-webkit-filerunner/test/rest.php/info.txt");
       });
     </script>
   </body>

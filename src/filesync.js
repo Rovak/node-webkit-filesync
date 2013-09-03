@@ -7,45 +7,22 @@ var fs = require('fs'),
     events = require('events'),
     child_process = require('child_process');
 
-
-function watchedFile(filename, id) {
+/**
+ * Watched File which is being synchronized
+ *
+ * @param  {String}   filename  Basename of the file
+ * @param  {Integer}  id        Unique ID
+ * @param  {String}   remoteUrl Remote url from where the file is downloaded
+ */
+function watchedFile(filename, id, remoteUrl) {
   this.filename = filename;
   this.id = id;
+  this.url = remoteUrl;
 }
 
 function sync(options) {
   this.options = options || {};
   this.folder = options.folder || process.cwd();
-}
-
-function send_file(file, data, remoteUrl) {
-  var me = this,
-      requestUrl = url.parse(remoteUrl),
-      post_options = {
-        host: requestUrl.hostname,
-        port: '80',
-        path: requestUrl.path,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': data.length
-        }
-      };
-
-  // Set up the request
-  var post_req = http.request(post_options, function (res) {
-    res.setEncoding('utf8');
-    res.on('end', function() {
-      me.emit('synced', {
-        filename: file.filename,
-        id: file.id
-      });
-    });
-  });
-
-  // post the data
-  post_req.write(data);
-  post_req.end();
 }
 
 sync.prototype = new events.EventEmitter();
@@ -56,8 +33,7 @@ sync.prototype.id = 0;
 
 /**
  * Stop watching the given filename
- * @param  {[type]} filename [description]
- * @return {[type]}          [description]
+ * @param  {String} filename
  */
 sync.prototype.stopWatching = function (filename) {
   fs.unwatchFile(filename);
@@ -72,17 +48,12 @@ sync.prototype.stopWatching = function (filename) {
 /**
  * Start watching the file for changes
  *
- * @param  {String} filename Full pathname to the file which must be watched
+ * @param  {WatchedFile} file Full pathname to the file which must be watched
  */
 sync.prototype.watchFile = function (file) {
   var me = this;
   fs.watch(file.filename, function (event, name) {
-    me.sendFile(file, "http://localhost/node-webkit-filerunner/test/post.php");
-    me.emit('send', {
-      filename: file.filename,
-      id: file.id,
-      file: file
-    });
+    me.sendFile(file);
   });
   this.watchedFiles.push(file.filename);
 };
@@ -90,24 +61,53 @@ sync.prototype.watchFile = function (file) {
 /**
  * Send file back to the server with a POST request
  *
- * @param  {[type]} filename  [description]
- * @param  {[type]} remoteUrl [description]
- * @return {[type]}           [description]
+ * @param  {watchedFile} file File which has to be send back
  */
-sync.prototype.sendFile = function (file, remoteUrl) {
+sync.prototype.sendFile = function (file) {
 
   var me = this;
+
+  this.emit('send_start', {
+    filename: file.filename,
+    id: file.id,
+    file: file
+  });
 
   fs.readFile(file.filename, 'utf-8', function (err, data) {
 
     if (err) {
-      me.emit('error', err);
+      me.emit('send_error', err);
       console.log("FATAL An error occurred trying to read in the file: " + err);
       return;
     }
 
     if (data) {
-      send_file(file, data, remoteUrl);
+      var requestUrl = url.parse(file.url),
+          post_options = {
+            host: requestUrl.hostname,
+            port: '80',
+            path: requestUrl.path,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Length': data.length
+            }
+          };
+
+      // Set up the request
+      var post_req = http.request(post_options, function (res) {
+        res.setEncoding(null);
+      });
+
+      post_req.on('response', function() {
+        me.emit('send_done', {
+          filename: file.filename,
+          id: file.id
+        });
+      });
+
+      post_req.write(data);
+      post_req.end();
     }
   });
 };
@@ -134,7 +134,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
   };
 
   request = http.request(options, function (res) {
-    var download_filename = options.path.split("/").pop(),
+    var download_filename = path.basename(options.path),
       total_length = parseInt(res.headers['content-length'], 0),
       fileId = me.id++,
       filename = me.folder + download_filename,
@@ -142,7 +142,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
         flags: 'w+'
       });
 
-    me.emit('start', {
+    me.emit('sync_start', {
       filename: download_filename,
       id: fileId
     });
@@ -151,7 +151,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
     res.on('data', function (chunk) {
       totalLength += chunk.length;
       download_stream.write(chunk, encoding = 'binary');
-      me.emit('progress', {
+      me.emit('sync_progress', {
         percentage: Math.round((totalLength / total_length) * 100),
         filename: download_filename,
         id: fileId
@@ -159,7 +159,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
     });
     res.on('end', function () {
       download_stream.end();
-      me.emit('finished', {
+      me.emit('sync_finished', {
         filename: download_filename,
         id: fileId
       });
@@ -167,7 +167,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
 
       // Small delay so a change event will not be fire immediatly
       setTimeout(function(){
-        me.watchFile(new watchedFile(filename, fileId));
+        me.watchFile(new watchedFile(filename, fileId, downloadUrl));
       }, 1500);
     });
   });
