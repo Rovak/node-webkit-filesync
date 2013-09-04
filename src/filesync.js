@@ -87,7 +87,7 @@ sync.prototype.sendFile = function (file) {
             host: requestUrl.hostname,
             port: '80',
             path: requestUrl.path,
-            method: 'POST',
+            method: 'PUT',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               'Content-Length': data.length
