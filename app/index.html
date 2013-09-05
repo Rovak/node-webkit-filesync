@@ -24,6 +24,7 @@
     <div id="status"><ul></ul></div>
     <script src="jquery.js"></script>
     <script type="text/javascript">
+      global.nwrequire = require;
       var filesync = require('./filesync').create({
         folder: '/var/www/node-webkit-filerunner/folder/'
       });

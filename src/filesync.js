@@ -5,7 +5,7 @@ var fs = require('fs'),
     util = require('util'),
     http = require('http'),
     events = require('events'),
-    child_process = require('child_process');
+    gui = nwrequire('nw.gui');
 
 /**
  * Watched File which is being synchronized
@@ -163,7 +163,7 @@ sync.prototype.downloadAndSyncFile = function (downloadUrl) {
         filename: download_filename,
         id: fileId
       });
-      child_process.spawn('xdg-open', [filename]);
+      gui.Shell.openItem(filename);
 
       // Small delay so a change event will not be fire immediatly
       setTimeout(function(){
